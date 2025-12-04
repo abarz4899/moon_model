@@ -4,6 +4,7 @@ from scipy.integrate import solve_ivp
 from CRTBP_dyn import CRTBP
 from CRTBP_x0_def import halo
 from astroConstants import astroConstants
+from frame_transformation import cr3bp2moon_inertial
 
 # -------------------------------
 # Initialization
@@ -27,19 +28,19 @@ atol = 1e-20
 # Find IC orbit 1 (Halo orbit)
 # -------------------------------
 #xx01 = np.array([1.06092, 0, -0.07349, 0, 0.3415, 0])
-xx01 = np.array([1.060, 0, -0.0734, 0, 0.341, 1e-4])
-T01 = 3.22473  # Halo with ~14 days period
+# xx01 = np.array([1.060, 0, -0.0734, 0, 0.341, 1e-4])
+# T01 = 3.22473  # Halo with ~14 days period
 
-xx01_ok, T01_ok = halo(xx01, T01, mu)
+# xx01_ok, T01_ok = halo(xx01, T01, mu)
 
-sol01 = solve_ivp(
-    dyn,
-    [0, T01_ok],
-    xx01_ok,
-    method='RK45',  # RK45 is closest to ode113 in SciPy
-    rtol=rtol,
-    atol=atol
-)
+# sol01 = solve_ivp(
+#     dyn,
+#     [0, T01_ok],
+#     xx01_ok,
+#     method='RK45',  # RK45 is closest to ode113 in SciPy
+#     rtol=rtol,
+#     atol=atol
+# )
 
 # -------------------------------
 # Find IC orbit 2 (DRO orbit)
@@ -64,7 +65,7 @@ sol02 = solve_ivp(
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
-ax.plot(sol01.y[0], sol01.y[1], sol01.y[2], 'k', linewidth=2, label='Halo')
+#ax.plot(sol01.y[0], sol01.y[1], sol01.y[2], 'k', linewidth=2, label='Halo')
 ax.plot(sol02.y[0], sol02.y[1], sol02.y[2], 'r', linewidth=2, label='DRO')
 
 ax.scatter(moon_coord[0], moon_coord[1], moon_coord[2], s=100, c='b', marker='o', label='Moon')
@@ -76,3 +77,19 @@ ax.legend()
 ax.grid(True)
 plt.show()
 
+xx02_moon = cr3bp2moon_inertial(sol02.y, sol02.t, {'mu': mu, 'LU': LU, 'TU': TU})
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+#ax.plot(sol01.y[0], sol01.y[1], sol01.y[2], 'k', linewidth=2, label='Halo')
+ax.plot(xx02_moon[0,:], xx02_moon[1,:], xx02_moon[2,:], 'r', linewidth=2, label='DRO')
+
+ax.scatter(0, 0, 0, s=100, c='b', marker='o', label='Moon')
+
+ax.set_xlabel('x [km]')
+ax.set_ylabel('y [km]')
+ax.set_zlabel('z [km]')
+ax.legend()
+ax.grid(True)
+plt.show()
