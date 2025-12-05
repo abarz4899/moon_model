@@ -45,8 +45,11 @@ atol = 1e-20
 # -------------------------------
 # Find IC orbit 2 (DRO orbit)
 # -------------------------------
-xx02 = np.array([0.8944016860, 0, 0, 0, 0.4737129104, 0])
-T02 = 1.3868167909756  # DRO with ~6 days period
+#xx02 = np.array([0.8944016860, 0, 0, 0, 0.4737129104, 0])
+#T02 = 1.3868167909756  # DRO with ~6 days period
+
+xx02 = np.array([3.5866379329881432E-1,	-3.4741501576342322E-23,	3.0245229067336969E-23,	1.2283366687296770E-12,	1.7230868937505937E+0,	2.1951256201511247E-23])
+T02 = 6.1814452901176562E+0  # DRO with ~27.4 days period
 
 xx02_ok, T02_ok = halo(xx02, T02, mu)
 
@@ -76,6 +79,7 @@ ax.set_zlabel('z [LU]')
 ax.legend()
 ax.grid(True)
 plt.show()
+#plt.show(block=False)
 
 xx02_moon = cr3bp2moon_inertial(sol02.y, sol02.t, {'mu': mu, 'LU': LU, 'TU': TU})
 
@@ -90,6 +94,8 @@ ax.scatter(0, 0, 0, s=100, c='b', marker='o', label='Moon')
 ax.set_xlabel('x [km]')
 ax.set_ylabel('y [km]')
 ax.set_zlabel('z [km]')
+ax.set_zlim(-1, 1)
 ax.legend()
 ax.grid(True)
 plt.show()
+#plt.show(block=False)
