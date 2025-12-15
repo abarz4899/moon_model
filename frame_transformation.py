@@ -36,3 +36,27 @@ def cr3bp2moon_inertial(x_cr3bp, t_v, param):
         #print(x_inertial[3:6, i])   
 
     return x_inertial
+
+def cr3bp2LL_moon(x_cr3bp, param):
+    mu = param['mu']
+    LU = param['LU']
+    alpha = np.deg2rad(-1.54)
+    cosa = np.cos(alpha)
+    sina = np.sin(alpha)
+
+    m = x_cr3bp.shape[0]
+    n = x_cr3bp.shape[1]
+    LL_moon = np.zeros((3, n))
+    x_moon = np.zeros((3, n))
+
+    for i in range(n):
+        pos_cr3bp = x_cr3bp[0:3, i]
+        x_moon[0, i] = pos_cr3bp[0]*cosa + pos_cr3bp[2]*sina - (1 - mu)
+        x_moon[1, i] = pos_cr3bp[1]
+        x_moon[2, i] = -pos_cr3bp[0]*sina + pos_cr3bp[2]*cosa
+
+        LL_moon[0,i] = np.linalg.norm(x_moon[:,i])*LU #radial distance [km]
+        LL_moon[1,i] =np.rad2deg(np.acos(x_moon[2,i]/LL_moon[0,i]))-90 #Latitude [deg] 0 at Moon equator
+        LL_moon[2,i] = np.sign(x_moon[1,i])*np.rad2deg(np.acos(x_moon[0,i]/np.sqrt(x_moon[0,i]**2+x_moon[1,i]**2))) #Longitude [deg]
+
+    return LL_moon

@@ -4,7 +4,7 @@ from scipy.integrate import solve_ivp
 from CRTBP_dyn import CRTBP
 from CRTBP_x0_def import halo
 from astroConstants import astroConstants
-from frame_transformation import cr3bp2moon_inertial
+from frame_transformation import cr3bp2moon_inertial, cr3bp2LL_moon
 
 # -------------------------------
 # Initialization
@@ -76,6 +76,7 @@ ax.scatter(moon_coord[0], moon_coord[1], moon_coord[2], s=100, c='b', marker='o'
 ax.set_xlabel('x [LU]')
 ax.set_ylabel('y [LU]')
 ax.set_zlabel('z [LU]')
+ax.set_zlim(-1, 1)
 ax.legend()
 ax.grid(True)
 plt.show()
@@ -99,3 +100,51 @@ ax.legend()
 ax.grid(True)
 plt.show()
 #plt.show(block=False)
+
+""" from astropy.time import Time
+from astropy.coordinates import solar_system_ephemeris
+from astropy.coordinates import get_body_barycentric
+
+t = Time('2025-01-01T00:00:00')
+
+with solar_system_ephemeris.set('de432s'):
+    moon_bary = get_body_barycentric('moon', t)
+    sun_bary = get_body_barycentric('sun', t)
+
+moon2sun = sun_bary - moon_bary
+print("Moon to Sun distance [km]: ", moon2sun.norm().to_value('km')) """
+
+xx02_LLmoon = cr3bp2LL_moon(sol02.y, {'mu': mu, 'LU': LU, 'TU': TU})
+
+plt.figure()
+plt.plot(sol02.t * TU / 86400, xx02_LLmoon[0,:])  # time in days if you want
+plt.xlabel('Time [days]')
+plt.ylabel('Radial distance [km]')
+plt.grid(True)
+plt.show()
+
+
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+
+# load image
+img = mpimg.imread('moon_colormap_1500.jpg')
+
+plt.figure(figsize=(10, 5))
+plt.imshow(
+    img,
+    extent=[-180, 180, -90, 90],   # [lon_min, lon_max, lat_min, lat_max]
+    origin='upper'
+)
+
+plt.plot(xx02_LLmoon[2,:], xx02_LLmoon[1,:], color = 'red', markersize=2)
+# axis limits
+plt.xlim(-180, 180)
+plt.ylim(-90, 90)
+plt.xlabel('Longitude [deg]')
+plt.ylabel('Latitude [deg]')
+plt.title('Latitude–Longitude Ground Track (Moon-centered)')
+plt.grid(True)
+plt.legend()
+
+plt.show()
