@@ -1,10 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import solve_ivp
+from scipy.integrate import solve_ivp, RK45
 from CRTBP_dyn import CRTBP
 from CRTBP_x0_def import halo
 from astroConstants import astroConstants
 from frame_transformation import cr3bp2moon_inertial, cr3bp2LL_moon
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 # -------------------------------
 # Initialization
@@ -24,82 +26,122 @@ dyn = lambda t, x_v: CRTBP(t, x_v, mu)
 rtol = 1e-13
 atol = 1e-20
 
-# -------------------------------
-# Find IC orbit 1 (Halo orbit)
-# -------------------------------
-#xx01 = np.array([1.06092, 0, -0.07349, 0, 0.3415, 0])
-# xx01 = np.array([1.060, 0, -0.0734, 0, 0.341, 1e-4])
-# T01 = 3.22473  # Halo with ~14 days period
+#xx0 = np.array([1.06092, 0, -0.07349, 0, 0.3415, 0])
+#T0 = 3.22473  # Halo with ~14 days period
 
-# xx01_ok, T01_ok = halo(xx01, T01, mu)
+xx0 = np.array([0.8944016860, 0, 0, 0, 0.4737129104, 0])
+T0 = 1.3868167909756  # DRO with ~6 days period
 
-# sol01 = solve_ivp(
-#     dyn,
-#     [0, T01_ok],
-#     xx01_ok,
-#     method='RK45',  # RK45 is closest to ode113 in SciPy
-#     rtol=rtol,
-#     atol=atol
-# )
+#xx0 = np.array([3.5866379329881432E-1,	-3.4741501576342322E-23,	3.0245229067336969E-23,	1.2283366687296770E-12,	1.7230868937505937E+0,	2.1951256201511247E-23])
+#T0 = 6.1814452901176562E+0  # DRO with ~27.4 days period from NASA catalog
+
+#xx0 = np.array([1.0382, 0, -0.1914, 0, -0.1359, 0])
+#T0 = 7.5 * 24 * 3600 / TU  # NRHO with ~7.5 days period https://www.researchgate.net/publication/374542949_Summary_of_a_Phase_0A_Study_Report_for_a_Communication_Satellite_Constellation_for_DIANA_Lunar_Infrastructure
+
+xx0, T0 = halo(xx0, T0, mu)
 
 # -------------------------------
-# Find IC orbit 2 (DRO orbit)
+# Solve CRTBP
 # -------------------------------
-#xx02 = np.array([0.8944016860, 0, 0, 0, 0.4737129104, 0])
-#T02 = 1.3868167909756  # DRO with ~6 days period
 
-xx02 = np.array([3.5866379329881432E-1,	-3.4741501576342322E-23,	3.0245229067336969E-23,	1.2283366687296770E-12,	1.7230868937505937E+0,	2.1951256201511247E-23])
-T02 = 6.1814452901176562E+0  # DRO with ~27.4 days period
-
-xx02_ok, T02_ok = halo(xx02, T02, mu)
-
-sol02 = solve_ivp(
+sol = solve_ivp(
     dyn,
-    [0, T02_ok],
-    xx02_ok,
+    [0, 3*T0],
+    xx0,
     method='RK45',
     rtol=rtol,
     atol=atol
 )
 
-# -------------------------------
-# Plotting
-# -------------------------------
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
-#ax.plot(sol01.y[0], sol01.y[1], sol01.y[2], 'k', linewidth=2, label='Halo')
-ax.plot(sol02.y[0], sol02.y[1], sol02.y[2], 'r', linewidth=2, label='DRO')
+ax.plot(sol.y[0]*LU, sol.y[1]*LU, sol.y[2]*LU, 'r', linewidth=2, label='Orbit')
 
-ax.scatter(moon_coord[0], moon_coord[1], moon_coord[2], s=100, c='b', marker='o', label='Moon')
+ax.scatter(moon_coord[0]*LU, moon_coord[1]*LU, moon_coord[2]*LU, s=100, c='b', marker='o', label='Moon')
 
-ax.set_xlabel('x [LU]')
-ax.set_ylabel('y [LU]')
-ax.set_zlabel('z [LU]')
-ax.set_zlim(-1, 1)
+ax.set_xlabel('x [km]')
+ax.set_ylabel('y [km]')
+ax.set_zlabel('z [km]')
+#ax.set_zlim(-1, 1)
 ax.legend()
 ax.grid(True)
-plt.show()
-#plt.show(block=False)
+plt.show(block=False)
+plt.pause(0.001)
 
-xx02_moon = cr3bp2moon_inertial(sol02.y, sol02.t, {'mu': mu, 'LU': LU, 'TU': TU})
+
+""" fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+ax.plot(sol.y[0]*LU, sol.y[1]*LU, 'r', linewidth=2, label='Orbit')
+
+ax.scatter(moon_coord[0]*LU, moon_coord[1]*LU, s=100, c='b', marker='o', label='Moon')
+
+ax.set_xlabel('x [km]')
+ax.set_ylabel('y [km]')
+#ax.set_zlim(-1, 1)
+ax.legend()
+ax.grid(True)
+plt.show(block=False)
+plt.pause(0.001) """
+
+# -------------------------------
+# Transform to Moon inertial frame
+# -------------------------------
+
+xx_moon = cr3bp2moon_inertial(sol.y, sol.t, {'mu': mu, 'LU': LU, 'TU': TU})
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-
-#ax.plot(sol01.y[0], sol01.y[1], sol01.y[2], 'k', linewidth=2, label='Halo')
-ax.plot(xx02_moon[0,:], xx02_moon[1,:], xx02_moon[2,:], 'r', linewidth=2, label='DRO')
+ax.plot(xx_moon[0,:], xx_moon[1,:], xx_moon[2,:], 'r', linewidth=2, label='Orbit')
 
 ax.scatter(0, 0, 0, s=100, c='b', marker='o', label='Moon')
 
 ax.set_xlabel('x [km]')
 ax.set_ylabel('y [km]')
 ax.set_zlabel('z [km]')
-ax.set_zlim(-1, 1)
 ax.legend()
 ax.grid(True)
-plt.show()
+plt.show(block=False)
+plt.pause(0.001)
+
+# -------------------------------
+# Get ground tracks
+# -------------------------------
+
+xx_LLmoon = cr3bp2LL_moon(sol.y, {'mu': mu, 'LU': LU, 'TU': TU})
+
+plt.figure()
+plt.plot(sol.t * TU / 86400, xx_LLmoon[0,:]*LU) # time in days
+plt.title('Radial distance from Moon center')
+plt.xlabel('Time [days]')
+plt.ylabel('Radial distance [km]')
+plt.grid(True)
+plt.show(block=False)
+plt.pause(0.001)
+
+img = mpimg.imread('moon_colormap_1500.jpg')
+
+plt.figure(figsize=(10, 5))
+plt.imshow(
+    img,
+    extent=[-180, 180, -90, 90],   # [lon_min, lon_max, lat_min, lat_max]
+    origin='upper'
+)
+
+plt.scatter(xx_LLmoon[2,:], xx_LLmoon[1,:], color = 'red', s=1, label="Ground Tracks")
+plt.plot(xx_LLmoon[2,0], xx_LLmoon[1,0], marker = 'D', color = 'blue', markersize=8, label="Start")
+plt.plot(xx_LLmoon[2,-1], xx_LLmoon[1,-1], marker = 'D', color = 'green', markersize=8, label="End")
+plt.xlim(-180, 180)
+plt.ylim(-90, 90)
+plt.xlabel('Longitude [deg]')
+plt.ylabel('Latitude [deg]')
+plt.title('Ground Tracks')
+plt.grid(True)
+plt.legend()
 #plt.show(block=False)
+plt.show()
+plt.pause(0.001)
 
 """ from astropy.time import Time
 from astropy.coordinates import solar_system_ephemeris
@@ -113,38 +155,3 @@ with solar_system_ephemeris.set('de432s'):
 
 moon2sun = sun_bary - moon_bary
 print("Moon to Sun distance [km]: ", moon2sun.norm().to_value('km')) """
-
-xx02_LLmoon = cr3bp2LL_moon(sol02.y, {'mu': mu, 'LU': LU, 'TU': TU})
-
-plt.figure()
-plt.plot(sol02.t * TU / 86400, xx02_LLmoon[0,:])  # time in days if you want
-plt.xlabel('Time [days]')
-plt.ylabel('Radial distance [km]')
-plt.grid(True)
-plt.show()
-
-
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-
-# load image
-img = mpimg.imread('moon_colormap_1500.jpg')
-
-plt.figure(figsize=(10, 5))
-plt.imshow(
-    img,
-    extent=[-180, 180, -90, 90],   # [lon_min, lon_max, lat_min, lat_max]
-    origin='upper'
-)
-
-plt.plot(xx02_LLmoon[2,:], xx02_LLmoon[1,:], color = 'red', markersize=2)
-# axis limits
-plt.xlim(-180, 180)
-plt.ylim(-90, 90)
-plt.xlabel('Longitude [deg]')
-plt.ylabel('Latitude [deg]')
-plt.title('Latitude–Longitude Ground Track (Moon-centered)')
-plt.grid(True)
-plt.legend()
-
-plt.show()
