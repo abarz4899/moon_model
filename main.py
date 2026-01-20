@@ -29,24 +29,31 @@ atol = 1e-20
 #xx0 = np.array([1.06092, 0, -0.07349, 0, 0.3415, 0])
 #T0 = 3.22473  # Halo with ~14 days period
 
-xx0 = np.array([0.8944016860, 0, 0, 0, 0.4737129104, 0])
-T0 = 1.3868167909756  # DRO with ~6 days period
+#xx0 = np.array([0.8944016860, 0, 0, 0, 0.4737129104, 0])
+#T0 = 1.3868167909756  # DRO with ~6 days period
 
 #xx0 = np.array([3.5866379329881432E-1,	-3.4741501576342322E-23,	3.0245229067336969E-23,	1.2283366687296770E-12,	1.7230868937505937E+0,	2.1951256201511247E-23])
 #T0 = 6.1814452901176562E+0  # DRO with ~27.4 days period from NASA catalog
 
-#xx0 = np.array([1.0382, 0, -0.1914, 0, -0.1359, 0])
-#T0 = 7.5 * 24 * 3600 / TU  # NRHO with ~7.5 days period https://www.researchgate.net/publication/374542949_Summary_of_a_Phase_0A_Study_Report_for_a_Communication_Satellite_Constellation_for_DIANA_Lunar_Infrastructure
+xx0 = np.array([1.0382, 0, -0.1914, 0, -0.1359, 0])
+T0 = 7.5 * 24 * 3600 / TU  # NRHO with ~7.5 days period https://www.researchgate.net/publication/374542949_Summary_of_a_Phase_0A_Study_Report_for_a_Communication_Satellite_Constellation_for_DIANA_Lunar_Infrastructure
 
-xx0, T0 = halo(xx0, T0, mu)
+#xx0, T0 = halo(xx0, T0, mu)
+x0_km = xx0[0:3] * LU
+v0_kms = xx0[3:6] * LU / TU
+T0_sec = T0 * TU
+print("Initial position [km]: ", x0_km)
+print("Initial velocity [km/s]: ", v0_kms)
+print("Orbit period [s]: ", T0_sec)
 
 # -------------------------------
 # Solve CRTBP
 # -------------------------------
+prop_time = T0  
 
 sol = solve_ivp(
     dyn,
-    [0, 3*T0],
+    [0, prop_time],
     xx0,
     method='RK45',
     rtol=rtol,
@@ -63,6 +70,7 @@ ax.scatter(moon_coord[0]*LU, moon_coord[1]*LU, moon_coord[2]*LU, s=100, c='b', m
 ax.set_xlabel('x [km]')
 ax.set_ylabel('y [km]')
 ax.set_zlabel('z [km]')
+plt.title('CRTBP Orbit')
 #ax.set_zlim(-1, 1)
 ax.legend()
 ax.grid(True)
@@ -100,6 +108,7 @@ ax.scatter(0, 0, 0, s=100, c='b', marker='o', label='Moon')
 ax.set_xlabel('x [km]')
 ax.set_ylabel('y [km]')
 ax.set_zlabel('z [km]')
+plt.title('Orbit in Moon Inertial Frame')
 ax.legend()
 ax.grid(True)
 plt.show(block=False)

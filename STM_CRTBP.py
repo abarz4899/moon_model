@@ -54,7 +54,7 @@ def stateTransCR3BP(tspan, x0, mu, options):
         if t == 0:
             position = 1.0  # Avoid triggering at t=0
         else:
-            position = y[37]  # Python is 0-indexed, MATLAB 38 -> y[37]
+            position = y[37]
         # Additional attributes for solve_ivp event
         return position
     
